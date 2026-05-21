@@ -28,4 +28,107 @@
         /* 완료되었을 때 */
         .task-item.completed .icon-box { background: #FF9B6A; color: white; transform: scale(1.1) rotate(-10deg); box-shadow: 0 4px 10px rgba(255, 155, 106, 0.3); }
         .task-item.completed .task-text { text-decoration: line-through; color: #C4B9B3; }
-        .task-item.completed .status { color: white; background: #FF9B6
+        .task-item.completed .status { color: white; background: #FF9B6A; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="title">🐾 설이 케어 일지</div>
+        <div class="date-control">
+            <button class="date-btn" id="prevBtn">◀</button>
+            <div class="date-display" id="todayDate">로딩중...</div>
+            <button class="date-btn" id="nextBtn">▶</button>
+        </div>
+    </div>
+    
+    <div class="task-list" id="taskList">
+        </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFTY-sXWWT2ni5Lyq90iFqCvBw8LEuhok",
+            authDomain: "seoli-care.firebaseapp.com",
+            databaseURL: "https://seoli-care-default-rtdb.firebaseio.com",
+            projectId: "seoli-care",
+            storageBucket: "seoli-care.firebasestorage.app",
+            messagingSenderId: "729701318985",
+            appId: "1:729701318985:web:85565cb3354ee3ff959a98"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let currentDate = new Date();
+        let currentListener = null;
+
+        // 점심 밥 주기 항목이 2번째에 추가되었습니다!
+        const defaultTasks = {
+            "task1": { text: "아침 밥 주기", icon: "🥣", done: false },
+            "task2": { text: "점심 밥 주기", icon: "🥫", done: false },
+            "task3": { text: "저녁 밥 주기", icon: "🍖", done: false },
+            "task4": { text: "오늘의 산책", icon: "🦮", done: false },
+            "task5": { text: "간식 챙겨주기", icon: "🦴", done: false },
+            "task6": { text: "영양제 먹이기", icon: "💊", done: false }
+        };
+
+        function updateScreen() {
+            const dateStr = currentDate.getFullYear() + '-' + String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + String(currentDate.getDate()).padStart(2, '0');
+            document.getElementById('todayDate').innerText = `${currentDate.getMonth() + 1}월 ${currentDate.getDate()}일`;
+
+            if (currentListener) {
+                currentListener(); 
+            }
+
+            const tasksRef = ref(db, 'seoli_care/' + dateStr);
+            
+            currentListener = onValue(tasksRef, (snapshot) => {
+                let data = snapshot.val();
+                if (!data) {
+                    data = defaultTasks; 
+                }
+                renderTasks(data, dateStr);
+            });
+        }
+
+        function renderTasks(tasks, dateStr) {
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            
+            for (const [key, task] of Object.entries(tasks)) {
+                const div = document.createElement('div');
+                div.className = `task-item ${task.done ? 'completed' : ''}`;
+                
+                div.onclick = () => {
+                    set(ref(db, `seoli_care/${dateStr}/${key}`), {
+                        ...task,
+                        done: !task.done
+                    });
+                };
+                
+                div.innerHTML = `
+                    <div class="icon-box">${task.icon}</div>
+                    <div class="task-text">${task.text}</div>
+                    <div class="status">${task.done ? '완료' : '대기중'}</div>
+                `;
+                list.appendChild(div);
+            }
+        }
+
+        document.getElementById('prevBtn').onclick = () => {
+            currentDate.setDate(currentDate.getDate() - 1);
+            updateScreen();
+        };
+        
+        document.getElementById('nextBtn').onclick = () => {
+            currentDate.setDate(currentDate.getDate() + 1);
+            updateScreen();
+        };
+
+        updateScreen();
+    </script>
+</body>
+</html>
