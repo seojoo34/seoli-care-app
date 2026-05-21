@@ -5,25 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>설이 케어 일지</title>
     <style>
-        /* 예쁜 감성 메모장 & 펫테리어 디자인 */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background-color: #FDFBF7; margin: 0; padding: 25px 20px; color: #4A2B1D; }
+        /* 국립공원 꼬미 웹 폰트 불러오기 */
+        @font-face {
+            font-family: 'NationalParkKomi';
+            src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/KNPSKkomi-Regular00.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* 폰트 적용 및 기본 디자인 */
+        body { 
+            font-family: 'NationalParkKomi', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; 
+            background-color: #FDFBF7; 
+            margin: 0; 
+            padding: 25px 20px; 
+            color: #4A2B1D; 
+        }
         
         .header { text-align: center; margin-bottom: 25px; }
-        .title { font-size: 26px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .title { font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
         
         /* 날짜 조작부 디자인 */
         .date-control { display: flex; justify-content: center; align-items: center; gap: 15px; }
-        .date-btn { background: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 14px; color: #FF9B6A; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; }
+        .date-btn { background: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; color: #FF9B6A; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; font-family: 'NationalParkKomi'; }
         .date-btn:active { background: #FF9B6A; color: white; }
-        .date-display { font-size: 16px; color: #666; font-weight: 700; background: #F0EDE5; padding: 6px 20px; border-radius: 20px; min-width: 110px; }
+        .date-display { font-size: 18px; color: #666; font-weight: 700; background: #F0EDE5; padding: 6px 20px; border-radius: 20px; min-width: 110px; }
         
         .task-list { background: white; border-radius: 24px; padding: 10px 20px; box-shadow: 0 8px 20px rgba(74, 43, 29, 0.04); }
         .task-item { display: flex; align-items: center; padding: 18px 0; border-bottom: 1px dashed #F0EDE5; cursor: pointer; transition: 0.2s ease-in-out; }
         .task-item:last-child { border-bottom: none; }
         
         .icon-box { width: 46px; height: 46px; background: #F8F6F0; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-right: 18px; transition: 0.3s; }
-        .task-text { font-size: 17px; font-weight: 700; flex: 1; transition: 0.2s; }
-        .status { font-size: 13px; color: #CCC; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: #FAFAFA; }
+        .task-text { font-size: 20px; font-weight: 700; flex: 1; transition: 0.2s; }
+        .status { font-size: 15px; color: #CCC; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: #FAFAFA; }
         
         /* 완료되었을 때 */
         .task-item.completed .icon-box { background: #FF9B6A; color: white; transform: scale(1.1) rotate(-10deg); box-shadow: 0 4px 10px rgba(255, 155, 106, 0.3); }
@@ -65,7 +79,6 @@
         let currentDate = new Date();
         let currentListener = null;
 
-        // 점심 밥 주기 항목이 2번째에 추가되었습니다!
         const defaultTasks = {
             "task1": { text: "아침 밥 주기", icon: "🥣", done: false },
             "task2": { text: "점심 밥 주기", icon: "🥫", done: false },
@@ -99,36 +112,4 @@
             list.innerHTML = '';
             
             for (const [key, task] of Object.entries(tasks)) {
-                const div = document.createElement('div');
-                div.className = `task-item ${task.done ? 'completed' : ''}`;
-                
-                div.onclick = () => {
-                    set(ref(db, `seoli_care/${dateStr}/${key}`), {
-                        ...task,
-                        done: !task.done
-                    });
-                };
-                
-                div.innerHTML = `
-                    <div class="icon-box">${task.icon}</div>
-                    <div class="task-text">${task.text}</div>
-                    <div class="status">${task.done ? '완료' : '대기중'}</div>
-                `;
-                list.appendChild(div);
-            }
-        }
-
-        document.getElementById('prevBtn').onclick = () => {
-            currentDate.setDate(currentDate.getDate() - 1);
-            updateScreen();
-        };
-        
-        document.getElementById('nextBtn').onclick = () => {
-            currentDate.setDate(currentDate.getDate() + 1);
-            updateScreen();
-        };
-
-        updateScreen();
-    </script>
-</body>
-</html>
+                const div = document.createElement('
