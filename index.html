@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>설이 케어 일지</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        /* 예쁜 감성 메모장 & 펫테리어 디자인 */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background-color: #FDFBF7; margin: 0; padding: 25px 20px; color: #4A2B1D; }
+        
+        .header { text-align: center; margin-bottom: 35px; }
+        .title { font-size: 26px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px; }
+        .date-display { font-size: 15px; color: #888; font-weight: 600; background: #F0EDE5; display: inline-block; padding: 6px 16px; border-radius: 20px; }
+        
+        .task-list { background: white; border-radius: 24px; padding: 10px 20px; box-shadow: 0 8px 20px rgba(74, 43, 29, 0.04); }
+        .task-item { display: flex; align-items: center; padding: 18px 0; border-bottom: 1px dashed #F0EDE5; cursor: pointer; transition: 0.2s ease-in-out; }
+        .task-item:last-child { border-bottom: none; }
+        
+        /* 귀여운 아이콘 박스 */
+        .icon-box { width: 46px; height: 46px; background: #F8F6F0; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-right: 18px; transition: 0.3s; }
+        .task-text { font-size: 17px; font-weight: 700; flex: 1; transition: 0.2s; }
+        .status { font-size: 13px; color: #CCC; font-weight: 600; padding: 4px 10px; border-radius: 12px; background: #FAFAFA; }
+        
+        /* 완료되었을 때 (가족 중 누군가 눌렀을 때!) */
+        .task-item.completed .icon-box { background: #FF9B6A; color: white; transform: scale(1.1) rotate(-10deg); box-shadow: 0 4px 10px rgba(255, 155, 106, 0.3); }
+        .task-item.completed .task-text { text-decoration: line-through; color: #C4B9B3; }
+        .task-item.completed .status { color: white; background: #FF9B6A; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="title">🐾 설이 케어 일지</div>
+        <div class="date-display" id="todayDate">로딩중...</div>
+    </div>
+    
+    <div class="task-list" id="taskList">
+        </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+        // 회원님의 파이어베이스 비밀 열쇠!
+        const firebaseConfig = {
+            apiKey: "AIzaSyCFTY-sXWWT2ni5Lyq90iFqCvBw8LEuhok",
+            authDomain: "seoli-care.firebaseapp.com",
+            databaseURL: "https://seoli-care-default-rtdb.firebaseio.com",
+            projectId: "seoli-care",
+            storageBucket: "seoli-care.firebasestorage.app",
+            messagingSenderId: "729701318985",
+            appId: "1:729701318985:web:85565cb3354ee3ff959a98"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 오늘 날짜 계산 (매일 자정이 되면 새 체크리스트로 바뀜!)
+        const today = new Date();
+        const dateStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+        
+        document.getElementById('todayDate').innerText = `${today.getMonth() + 1}월 ${today.getDate()}일의 기록`;
+
+        // 설이의 하루 필수 일과표
+        const defaultTasks = {
+            "task1": { text: "아침 밥 주기", icon: "🥣", done: false },
+            "task2": { text: "저녁 밥 주기", icon: "🍖", done: false },
+            "task3": { text: "오늘의 산책", icon: "🦮", done: false },
+            "task4": { text: "간식 챙겨주기", icon: "🦴", done: false },
+            "task5": { text: "영양제 먹이기", icon: "💊", done: false }
+        };
+
+        const tasksRef = ref(db, 'seoli_care/' + dateStr);
+
+        // 실시간으로 가족들의 클릭 상태를 감지해서 화면에 그려줌
+        onValue(tasksRef, (snapshot) => {
+            let data = snapshot.val();
+            // 오늘 처음 앱을 켰다면 빈 일과표 생성
+            if (!data) {
+                set(tasksRef, defaultTasks);
+                data = defaultTasks;
+            }
+            renderTasks(data);
+        });
+
+        // 화면에 체크리스트 그리기
+        function renderTasks(tasks) {
+            const list = document.getElementById('taskList');
+            list.innerHTML = '';
+            
+            for (const [key, task] of Object.entries(tasks)) {
+                const div = document.createElement('div');
+                div.className = `task-item ${task.done ? 'completed' : ''}`;
+                
+                // 항목을 클릭하면 파이어베이스 데이터를 바꿔버림! (실시간)
+                div.onclick = () => {
+                    set(ref(db, `seoli_care/${dateStr}/${key}/done`), !task.done);
+                };
+                
+                div.innerHTML = `
+                    <div class="icon-box">${task.icon}</div>
+                    <div class="task-text">${task.text}</div>
+                    <div class="status">${task.done ? '완료' : '대기중'}</div>
+                `;
+                list.appendChild(div);
+            }
+        }
+    </script>
+</body>
+</html>
