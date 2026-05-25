@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>설이 케어 일지</title>
     <link rel="apple-touch-icon" href="icon.png">
-<link rel="shortcut icon" href="icon.png">
-<link rel="manifest" href="manifest.json">
+    <link rel="shortcut icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
     <style>
         /* 국립공원 꼬미 웹 폰트 불러오기 */
         @font-face {
@@ -28,11 +28,27 @@
         .header { text-align: center; margin-bottom: 25px; }
         .title { font-size: 30px; font-weight: 900; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; }
         
-        /* 날짜 조작부 디자인 */
+        /* 💡 날짜 및 요일 조작부 디자인 수정 */
         .date-control { display: flex; justify-content: center; align-items: center; gap: 15px; }
         .date-btn { background: white; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; color: #FF9B6A; box-shadow: 0 2px 8px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; font-family: 'NationalParkKomi'; }
         .date-btn:active { background: #FF9B6A; color: white; }
-        .date-display { font-size: 18px; color: #666; font-weight: 700; background: #F0EDE5; padding: 6px 20px; border-radius: 20px; min-width: 110px; }
+        
+        /* 날짜 밑에 요일이 오도록 레이아웃 변경 */
+        .date-display { 
+            font-size: 18px; 
+            color: #666; 
+            font-weight: 700; 
+            background: #F0EDE5; 
+            padding: 8px 20px; 
+            border-radius: 20px; 
+            min-width: 110px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            line-height: 1.3;
+        }
+        .day-text { font-size: 14px; color: #FF9B6A; margin-top: 2px; } /* 요일 글씨 스타일 */
         
         /* 체크리스트 디자인 */
         .task-list { background: white; border-radius: 24px; padding: 10px 20px; box-shadow: 0 8px 20px rgba(74, 43, 29, 0.04); margin-bottom: 20px; }
@@ -47,7 +63,7 @@
         .task-item.completed .task-text { text-decoration: line-through; color: #C4B9B3; }
         .task-item.completed .status { color: white; background: #FF9B6A; }
 
-        /* 메모장 디자인 추가 */
+        /* 메모장 디자인 */
         .memo-section { background: white; border-radius: 24px; padding: 20px; box-shadow: 0 8px 20px rgba(74, 43, 29, 0.04); }
         .memo-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; color: #666; }
         .memo-input { width: 100%; box-sizing: border-box; height: 90px; border: 2px dashed #F0EDE5; border-radius: 12px; padding: 15px; font-family: 'NationalParkKomi', sans-serif; font-size: 18px; color: #4A2B1D; resize: none; outline: none; transition: 0.3s; background: #FAFAFA; }
@@ -73,7 +89,7 @@
 
     <div class="memo-section">
         <div class="memo-title">📝 오늘의 메모</div>
-        <textarea id="memoInput" class="memo-input" placeholder="오늘 설이의 특이사항을 남겨주세요! (예: 똥 상태 좋음, 산책 30분 함)"></textarea>
+        <textarea id="memoInput" class="memo-input" placeholder="오늘 설이의 특이사항을 남겨주세요!"></textarea>
         <button id="memoSaveBtn" class="memo-btn">저장하기</button>
     </div>
 
@@ -103,8 +119,15 @@
             appId: "1:729701318985:web:85565cb3354ee3ff959a98"
         };
 
+        // 💡 요일 계산해서 HTML에 쏙 넣어주는 기능!
         function updateDateUI() {
-            document.getElementById('todayDate').innerText = `${currentDate.getMonth() + 1}월 ${currentDate.getDate()}일`;
+            const dayList = ['일', '월', '화', '수', '목', '금', '토'];
+            const dayOfWeek = dayList[currentDate.getDay()];
+            
+            document.getElementById('todayDate').innerHTML = `
+                ${currentDate.getMonth() + 1}월 ${currentDate.getDate()}일
+                <span class="day-text">${dayOfWeek}요일</span>
+            `;
         }
 
         try {
@@ -138,13 +161,11 @@
 
                     renderTasks(dataToRender, dateStr);
 
-                    // 사용자가 메모를 입력 중이 아닐 때만 화면에 메모 불러오기
                     const memoInput = document.getElementById('memoInput');
                     if (document.activeElement !== memoInput) {
                         memoInput.value = savedData.memo || '';
                     }
                     
-                    // 메모가 비어있으면 저장 버튼 회색, 내용이 있으면 주황색으로 변경
                     checkMemoStatus();
                 });
             }
@@ -173,7 +194,6 @@
                 }
             }
 
-            // 날짜 이동 버튼
             document.getElementById('prevBtn').onclick = () => {
                 currentDate.setDate(currentDate.getDate() - 1);
                 updateScreen();
@@ -184,7 +204,6 @@
                 updateScreen();
             };
 
-            // 메모장 글씨 쓸 때 버튼 색상 활성화
             const memoInput = document.getElementById('memoInput');
             const memoSaveBtn = document.getElementById('memoSaveBtn');
             
@@ -197,7 +216,6 @@
             }
             memoInput.addEventListener('input', checkMemoStatus);
 
-            // 메모 저장 버튼 클릭 시 파이어베이스에 저장
             memoSaveBtn.onclick = () => {
                 const dateStr = currentDate.getFullYear() + '-' + String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + String(currentDate.getDate()).padStart(2, '0');
                 const memoText = memoInput.value;
